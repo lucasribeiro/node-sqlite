@@ -16,8 +16,16 @@ produtosRouter.get('/:id', async (request, response) => {
    await knex('produtos').where('id', request.params.id)
    .first()
     .then((produto: any) => {
+      if (produto)
+      {
          response.status(200).json(produto)
-    });
+      }
+      else
+      {
+         response.status(400).json(`{messagem: "Produto não encontrado"}`);
+      }   
+   });
+
 
  });
 
