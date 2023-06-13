@@ -1,4 +1,5 @@
 import { Router } from 'express';
+const knex = require('knex')(require('../../knexfile.js').development);
 
 const produtosRouter = Router();
 
@@ -12,53 +13,66 @@ const produtos = [
 
 // Cria um manipulador da rota padrão
 produtosRouter.get('/:id', async (request, response) => {
-    const id: number = parseInt(request.params.id, 10);
-
-    const produto = produtos.find(p => p.id === id);
-
-    response.status(200).json(produto);
+   await knex('produtos').where('id', request.params.id)
+   .first()
+    .then((produto: any) => {
+         response.status(200).json(produto)
+    });
 
  });
 
  produtosRouter.get('/', async (request, response) => {
-    response.status(200).json(produtos);
-
+    await knex('produtos').select('*')
+    .then((produtos: any) => {
+         response.status(200).json(produtos)
+    });
  });
 
- produtosRouter.post('/', (request, response) => {
-    console.log(request.body);
-    const {descricao, valor, marca } = request.body;
+ produtosRouter.post('/', async (request, response) => {
 
-    const id = Math.max(...produtos.map(p => p.id)) + 1;
-    console.log(id);
-    produtos.push({id, descricao, valor, marca});
-    response.status(200).send(`Produto ${descricao} gravado na lista`);
+   await knex('produtos').insert(request.body, ['id'])
+         .then((produtos: any) => {
+            if (produtos)
+            {
+               let id = produtos[0].id;
+               response.status(201).json({
+                  message: "Produto criado com sucesso",
+                  data: {
+                     'id': id
+                  }
+               });
+            }
+            else
+            {
+               response.status(400).json(`{messagem: "Erro ao criar o produto"}`);
+            }               
+         }).catch((err: any) => {
+            response.status(500).json(`{messagem: "Erro ao criar o produto: " ${err.message}}`);
+         });
  });
 
- produtosRouter.put('/:id', (request, response) => {
-    
-    const id: number = parseInt(request.params.id, 10);
+ produtosRouter.put('/:id', async (request, response) => {
 
-    const index = produtos.findIndex(p => p.id === id);
+   const {descricao, valor, marca } = request.body;
 
-    const {descricao, valor, marca } = request.body;
-
-    produtos[index].descricao = descricao;
-    produtos[index].marca = marca;
-    produtos[index].valor = valor;
-    
-    response.status(201).json(produtos[index]);
+   await knex('produtos').where('id', request.params.id)
+   .update({
+      descricao: descricao,
+      marca: marca,
+      valor: valor
+    }, ['id', 'descricao', 'valor', 'marca'])
+    .then((produto: any) => {
+         response.status(201).json(produto)
+    });    
  });
 
  produtosRouter.delete('/:id', async (request, response) => {
-    const id: number = parseInt(request.params.id, 10);
 
-    const index = produtos.findIndex(p => p.id === id);
-
-    produtos.splice(index, 1);
-
-    response.status(202).json(`Produto removido na lista`);
-
+   await knex('produtos').where('id', request.params.id)
+   .del()
+    .then((produto: any) => {
+      response.status(202).json(`Produto removido na lista`);
+    });  
  });
 
 export default produtosRouter;
