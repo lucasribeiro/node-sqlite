@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import produtosRouter from  './produtos.router';
+import produtosRouter from  './aparelhos.router';
 
 const routes = Router();
 
-routes.use('/produtos', produtosRouter);
+routes.use('/aparelhos', produtosRouter);
 
 export default routes;
